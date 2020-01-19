@@ -1,0 +1,14 @@
+[package]
+name = "dangerust-6"
+version = "0.1.0"
+authors = ["Ilia Schelokov <thaumant@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+
+[dev-dependencies]
+criterion = "0.3"
+
+[[bench]]
+name = "dangerust"
+harness = false
