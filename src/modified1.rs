@@ -2,7 +2,7 @@
 //! 1. Use `Triple` instead of `[f64; 3]`.
 
 use std::f64::consts::PI;
-use std::ops::{Add, Sub};
+use std::ops::{Add, Sub, Mul};
 
 #[derive(Copy, Clone, Debug)]
 pub struct Triple(f64, f64, f64);
@@ -14,25 +14,16 @@ impl Triple {
             + self.1 * self.1
             + self.2 * self.2
     }
-
-    #[inline]
-    pub fn scale(self, n: f64) -> Self {
-        Triple(
-            self.0 * n,
-            self.1 * n,
-            self.2 * n
-        )
-    }
 }
 
 impl Add for Triple {
     type Output = Triple;
     #[inline]
-    fn add(self, other: Self) -> Self::Output {
+    fn add(self, rhs: Self) -> Self::Output {
         Triple(
-            self.0 + other.0,
-            self.1 + other.1,
-            self.2 + other.2
+            self.0 + rhs.0,
+            self.1 + rhs.1,
+            self.2 + rhs.2
         )
     }
 }
@@ -40,11 +31,23 @@ impl Add for Triple {
 impl Sub for Triple {
     type Output = Triple;
     #[inline]
-    fn sub(self, other: Self) -> Self::Output {
+    fn sub(self, rhs: Self) -> Self::Output {
         Triple(
-            self.0 - other.0,
-            self.1 - other.1,
-            self.2 - other.2
+            self.0 - rhs.0,
+            self.1 - rhs.1,
+            self.2 - rhs.2
+        )
+    }
+}
+
+impl Mul<f64> for Triple {
+    type Output = Triple;
+    #[inline]
+    fn mul(self, rhs: f64) -> Self::Output {
+        Triple(
+            self.0 * rhs,
+            self.1 * rhs,
+            self.2 * rhs
         )
     }
 }
@@ -167,8 +170,8 @@ pub fn advance(bodies: &mut [Body; BODIES_COUNT]) {
             for j in i + 1..BODIES_COUNT {
                 let mag = magnitudes[k];
                 let pos_delta = position_deltas[k];
-                bodies[i].velocity = bodies[i].velocity - pos_delta.scale(bodies[j].mass * mag);
-                bodies[j].velocity = bodies[j].velocity + pos_delta.scale(bodies[i].mass * mag);
+                bodies[i].velocity = bodies[i].velocity - pos_delta * (bodies[j].mass * mag);
+                bodies[j].velocity = bodies[j].velocity + pos_delta * (bodies[i].mass * mag);
                 k += 1;
             }
         }
@@ -176,7 +179,7 @@ pub fn advance(bodies: &mut [Body; BODIES_COUNT]) {
 
     // Update each body's position.
     for body in bodies {
-        body.position = body.position + body.velocity.scale(0.01);
+        body.position = body.position + body.velocity * 0.01;
     }
 }
 
@@ -185,7 +188,7 @@ pub fn offset_momentum(bodies: &mut [Body; BODIES_COUNT]) {
     let (sun, planets) = bodies.split_first_mut().unwrap();
     sun.velocity = Triple(0., 0., 0.);
     for planet in planets {
-        sun.velocity = sun.velocity - planet.velocity.scale(planet.mass / SOLAR_MASS);
+        sun.velocity = sun.velocity - planet.velocity * (planet.mass / SOLAR_MASS);
     }
 }
 
