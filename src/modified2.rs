@@ -3,7 +3,7 @@
 //! 2. Replace index access with iterators.
 
 use std::f64::consts::PI;
-use std::ops::{Add, Sub, Mul};
+use std::ops::{Add, Sub, Mul, AddAssign, SubAssign};
 
 #[derive(Copy, Clone, Debug)]
 pub struct Triple(f64, f64, f64);
@@ -50,6 +50,22 @@ impl Mul<f64> for Triple {
             self.1 * rhs,
             self.2 * rhs
         )
+    }
+}
+
+impl AddAssign for Triple {
+    fn add_assign(&mut self, rhs: Self) {
+        self.0 += rhs.0;
+        self.1 += rhs.1;
+        self.2 += rhs.2;
+    }
+}
+
+impl SubAssign for Triple {
+    fn sub_assign(&mut self, rhs: Self) {
+        self.0 -= rhs.0;
+        self.1 -= rhs.1;
+        self.2 -= rhs.2;
     }
 }
 
@@ -169,10 +185,10 @@ pub fn advance(bodies: &mut [Body; BODIES_COUNT]) {
         for i in 0 .. BODIES_COUNT - 1 {
             let (body1, rest) = bodies[i..].split_first_mut().unwrap();
             for body2 in rest {
-                let mag        = magnitudes[k];
-                let pos_delta  = position_deltas[k];
-                body1.velocity = body1.velocity - pos_delta * (body2.mass * mag);
-                body2.velocity = body2.velocity + pos_delta * (body1.mass * mag);
+                let mag         = magnitudes[k];
+                let pos_delta   = position_deltas[k];
+                body1.velocity -= pos_delta * (body2.mass * mag);
+                body2.velocity += pos_delta * (body1.mass * mag);
                 k += 1;
             }
         }
@@ -180,7 +196,7 @@ pub fn advance(bodies: &mut [Body; BODIES_COUNT]) {
 
     // Update each body's position.
     for body in bodies {
-        body.position = body.position + body.velocity * 0.01;
+        body.position += body.velocity * 0.01;
     }
 }
 
@@ -189,7 +205,7 @@ pub fn offset_momentum(bodies: &mut [Body; BODIES_COUNT]) {
     let (sun, planets) = bodies.split_first_mut().unwrap();
     sun.velocity = Triple(0., 0., 0.);
     for planet in planets {
-        sun.velocity = sun.velocity - planet.velocity * (planet.mass / SOLAR_MASS);
+        sun.velocity -= planet.velocity * (planet.mass / SOLAR_MASS);
     }
 }
 
