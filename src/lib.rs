@@ -1,35 +1,35 @@
-pub mod original;
-pub mod modified1;
-pub mod modified2;
+pub mod biffle;
+pub mod thaumant1;
+pub mod thaumant2;
 
 
 #[cfg(test)]
 mod test {
-    use crate::original;
-    use crate::modified1;
-    use crate::modified2;
+    use crate::biffle;
+    use crate::thaumant1;
+    use crate::thaumant2;
     
     #[test]
     fn compare() {
-        let mut original_bodies  = original::STARTING_STATE;
-        let mut modified1_bodies = modified1::STARTING_STATE;
-        let mut modified2_bodies = modified2::STARTING_STATE;
+        let mut biffle_bodies  = biffle::STARTING_STATE;
+        let mut thaumant1_bodies = thaumant1::STARTING_STATE;
+        let mut thaumant2_bodies = thaumant2::STARTING_STATE;
 
-        original::offset_momentum(&mut original_bodies);
-        modified1::offset_momentum(&mut modified1_bodies);
-        modified2::offset_momentum(&mut modified2_bodies);
+        biffle::offset_momentum(&mut biffle_bodies);
+        thaumant1::offset_momentum(&mut thaumant1_bodies);
+        thaumant2::offset_momentum(&mut thaumant2_bodies);
 
         for _ in 0..1000 {
-            let original_energy  = original::compute_energy(&mut original_bodies);
-            let modified1_energy = modified1::compute_energy(&mut modified1_bodies);
-            let modified2_energy = modified2::compute_energy(&mut modified2_bodies);
+            let biffle_energy  = biffle::compute_energy(&mut biffle_bodies);
+            let thaumant1_energy = thaumant1::compute_energy(&mut thaumant1_bodies);
+            let thaumant2_energy = thaumant2::compute_energy(&mut thaumant2_bodies);
 
-            assert_eq!(original_energy, modified1_energy);
-            assert_eq!(original_energy, modified2_energy);
+            assert_eq!(biffle_energy, thaumant1_energy);
+            assert_eq!(biffle_energy, thaumant2_energy);
 
-            original::advance(&mut original_bodies);
-            modified1::advance(&mut modified1_bodies);
-            modified2::advance(&mut modified2_bodies);
+            biffle::advance(&mut biffle_bodies);
+            thaumant1::advance(&mut thaumant1_bodies);
+            thaumant2::advance(&mut thaumant2_bodies);
         }
     }
 }
