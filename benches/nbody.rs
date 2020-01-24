@@ -1,5 +1,5 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use benchmarks_game::{rehnberger, biffle, thaumant1, thaumant2};
+use benchmarks_game::{rehnberger, biffle, thaumant};
 
 pub fn nbody_benchmark(c: &mut Criterion) {
 
@@ -24,22 +24,12 @@ pub fn nbody_benchmark(c: &mut Criterion) {
         })
     });
 
-    c.bench_function("thaumant1", |b| {
-        let mut thaumant2_bodies = thaumant1::STARTING_STATE;
-        thaumant1::offset_momentum(&mut thaumant2_bodies);
+    c.bench_function("thaumant", |b| {
+        let mut thaumant2_bodies = thaumant::STARTING_STATE;
+        thaumant::offset_momentum(&mut thaumant2_bodies);
         b.iter(|| {
             for _ in 0..1000 {
-                thaumant1::advance(&mut thaumant2_bodies);
-            }
-        })
-    });
-
-    c.bench_function("thaumant2", |b| {
-        let mut thaumant2_bodies = thaumant2::STARTING_STATE;
-        thaumant2::offset_momentum(&mut thaumant2_bodies);
-        b.iter(|| {
-            for _ in 0..1000 {
-                thaumant2::advance(&mut thaumant2_bodies);
+                thaumant::advance(&mut thaumant2_bodies);
             }
         })
     });

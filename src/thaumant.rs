@@ -10,7 +10,7 @@ pub struct Triple(f64, f64, f64);
 
 impl Triple {
     #[inline]
-    pub fn sum_squared(self) -> f64 {
+    pub fn sum_squares(self) -> f64 {
         self.0 * self.0
             + self.1 * self.1
             + self.2 * self.2
@@ -69,7 +69,6 @@ impl SubAssign for Triple {
     }
 }
 
-/// State of a single body (sun or planet) in the solar system.
 #[derive(Clone, Debug)]
 pub struct Body {
     position: Triple,
@@ -77,16 +76,13 @@ pub struct Body {
     mass: f64,
 }
 
-/// Number of bodies modeled in the simulation.
 pub const BODIES_COUNT: usize = 5;
 
 pub const SOLAR_MASS: f64 = 4. * PI * PI;
 pub const DAYS_PER_YEAR: f64 = 365.24;
 
-/// Number of body-body interactions.
 pub const INTERACTIONS: usize = BODIES_COUNT * (BODIES_COUNT - 1) / 2;
 
-/// Initial state of the simulation.
 pub const STARTING_STATE: [Body; BODIES_COUNT] = [
     // Sun
     Body {
@@ -154,47 +150,37 @@ pub const STARTING_STATE: [Body; BODIES_COUNT] = [
 
 /// Steps the simulation forward by one time-step.
 pub fn advance(bodies: &mut [Body; BODIES_COUNT]) {
+    let mut k = 0;
+
     // Compute point-to-point vectors between each unique pair of bodies.
-    // Note: this array is large enough that computing it mutable and returning
-    // it from a block, as I did with magnitudes below, generates a memcpy.
-    // Sigh. So I'll leave it mutable.
-    let mut position_deltas = [Triple(0., 0., 0.); INTERACTIONS];
-    {
-        let mut k = 0;
-        for (i, body1) in bodies.iter().enumerate() {
-            for body2 in &bodies[i + 1 ..] {
-                position_deltas[k] = body1.position - body2.position;
-                k += 1;
-            }
+    let mut d_positions = [Triple(0., 0., 0.); INTERACTIONS];
+    for (i, body1) in bodies.iter().enumerate() {
+        for body2 in &bodies[i + 1 ..] {
+            d_positions[k] = body1.position - body2.position;
+            k += 1;
         }
     }
 
     // Compute the `1/d^3` magnitude between each pair of bodies.
-    let magnitudes = {
-        let mut magnitudes = [0.; INTERACTIONS];
-        for (mag, pos_delta) in magnitudes.iter_mut().zip(position_deltas.iter()) {
-            let mag_delta = pos_delta.sum_squared();
-            *mag = 0.01 / (mag_delta * mag_delta.sqrt());
-        }
-        magnitudes
+    let mut magnitudes = [0.; INTERACTIONS];
+    for (magnitude, d_position) in magnitudes.iter_mut().zip(d_positions.iter()) {
+        let d_magnitude = d_position.sum_squares();
+        *magnitude = 0.01 / (d_magnitude * d_magnitude.sqrt());
     };
 
     // Apply every other body's gravitation to each body's velocity.
-    {
-        let mut k = 0;
-        for i in 0 .. BODIES_COUNT - 1 {
-            let (body1, rest) = bodies[i..].split_first_mut().unwrap();
-            for body2 in rest {
-                let mag         = magnitudes[k];
-                let pos_delta   = position_deltas[k];
-                body1.velocity -= pos_delta * (body2.mass * mag);
-                body2.velocity += pos_delta * (body1.mass * mag);
-                k += 1;
-            }
+    k = 0;
+    for i in 0 .. BODIES_COUNT - 1 {
+        let (body1, rest) = bodies[i..].split_first_mut().unwrap();
+        for body2 in rest {
+            let magnitude   = magnitudes[k];
+            let d_position  = d_positions[k];
+            body1.velocity -= d_position * (body2.mass * magnitude);
+            body2.velocity += d_position * (body1.mass * magnitude);
+            k += 1;
         }
     }
 
-    // Update each body's position.
     for body in bodies {
         body.position += body.velocity * 0.01;
     }
@@ -216,13 +202,12 @@ pub fn compute_energy(bodies: &mut [Body; BODIES_COUNT]) -> f64 {
         // Add the kinetic energy for each body.
         energy += 0.5
             * body1.mass
-            * body1.velocity.sum_squared();
+            * body1.velocity.sum_squares();
         // Add the potential energy between this body and every other body.
         for body2 in &bodies[i + 1 ..] {
-            let pos_delta = body1.position - body2.position;
-            energy -= body1.mass * body2.mass / pos_delta.sum_squared().sqrt();
+            let d_position = body1.position - body2.position;
+            energy -= body1.mass * body2.mass / d_position.sum_squares().sqrt();
         }
     }
-
     energy
 }
