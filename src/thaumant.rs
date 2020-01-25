@@ -1,5 +1,5 @@
 //! Changes:
-//! 1. Use `Triple` instead of `[f64; 3]`.
+//! 1. Use `Vec3D` instead of `[f64; 3]`.
 //! 2. Replace index access with iterators.
 
 use std::f64::consts::PI;
@@ -7,9 +7,9 @@ use std::ops::{Add, Sub, Mul, AddAssign, SubAssign};
 use std::default::Default;
 
 #[derive(Clone, Debug)]
-pub struct Triple(f64, f64, f64);
+pub struct Vec3D(f64, f64, f64);
 
-impl Triple {
+impl Vec3D {
     pub fn sum_squares(&self) -> f64 {
         self.0 * self.0
             + self.1 * self.1
@@ -22,16 +22,16 @@ impl Triple {
     }
 }
 
-impl Default for Triple {
-    fn default() -> Triple {
-        Triple(0.0, 0.0, 0.0)
+impl Default for Vec3D {
+    fn default() -> Vec3D {
+        Vec3D(0.0, 0.0, 0.0)
     }
 }
 
-impl Add for &Triple {
-    type Output = Triple;
+impl Add for &Vec3D {
+    type Output = Vec3D;
     fn add(self, rhs: Self) -> Self::Output {
-        Triple(
+        Vec3D(
             self.0 + rhs.0,
             self.1 + rhs.1,
             self.2 + rhs.2
@@ -39,10 +39,10 @@ impl Add for &Triple {
     }
 }
 
-impl Sub for &Triple {
-    type Output = Triple;
+impl Sub for &Vec3D {
+    type Output = Vec3D;
     fn sub(self, rhs: Self) -> Self::Output {
-        Triple(
+        Vec3D(
             self.0 - rhs.0,
             self.1 - rhs.1,
             self.2 - rhs.2
@@ -50,10 +50,10 @@ impl Sub for &Triple {
     }
 }
 
-impl Mul<f64> for &Triple {
-    type Output = Triple;
+impl Mul<f64> for &Vec3D {
+    type Output = Vec3D;
     fn mul(self, rhs: f64) -> Self::Output {
-        Triple(
+        Vec3D(
             self.0 * rhs,
             self.1 * rhs,
             self.2 * rhs
@@ -61,7 +61,7 @@ impl Mul<f64> for &Triple {
     }
 }
 
-impl AddAssign for Triple {
+impl AddAssign for Vec3D {
     fn add_assign(&mut self, rhs: Self) {
         self.0 += rhs.0;
         self.1 += rhs.1;
@@ -69,7 +69,7 @@ impl AddAssign for Triple {
     }
 }
 
-impl SubAssign for Triple {
+impl SubAssign for Vec3D {
     fn sub_assign(&mut self, rhs: Self) {
         self.0 -= rhs.0;
         self.1 -= rhs.1;
@@ -79,8 +79,8 @@ impl SubAssign for Triple {
 
 #[derive(Clone, Debug)]
 pub struct Body {
-    position: Triple,
-    velocity: Triple,
+    position: Vec3D,
+    velocity: Vec3D,
     mass: f64,
 }
 
@@ -97,17 +97,17 @@ pub const STARTING_STATE: [Body; BODIES_COUNT] = [
     // Sun
     Body {
         mass: SOLAR_MASS,
-        position: Triple(0., 0., 0.),
-        velocity: Triple(0., 0., 0.),
+        position: Vec3D(0., 0., 0.),
+        velocity: Vec3D(0., 0., 0.),
     },
     // Jupiter
     Body {
-        position: Triple(
+        position: Vec3D(
             4.841_431_442_464_72e0,
             -1.160_320_044_027_428_4e0,
             -1.036_220_444_711_231_1e-1,
         ),
-        velocity: Triple(
+        velocity: Vec3D(
             1.660_076_642_744_037e-3 * DAYS_PER_YEAR,
             7.699_011_184_197_404e-3 * DAYS_PER_YEAR,
             -6.904_600_169_720_63e-5 * DAYS_PER_YEAR,
@@ -116,12 +116,12 @@ pub const STARTING_STATE: [Body; BODIES_COUNT] = [
     },
     // Saturn
     Body {
-        position: Triple(
+        position: Vec3D(
             8.343_366_718_244_58e0,
             4.124_798_564_124_305e0,
             -4.035_234_171_143_214e-1,
         ),
-        velocity: Triple(
+        velocity: Vec3D(
             -2.767_425_107_268_624e-3 * DAYS_PER_YEAR,
             4.998_528_012_349_172e-3 * DAYS_PER_YEAR,
             2.304_172_975_737_639_3e-5 * DAYS_PER_YEAR,
@@ -130,12 +130,12 @@ pub const STARTING_STATE: [Body; BODIES_COUNT] = [
     },
     // Uranus
     Body {
-        position: Triple(
+        position: Vec3D(
             1.289_436_956_213_913_1e1,
             -1.511_115_140_169_863_1e1,
             -2.233_075_788_926_557_3e-1,
         ),
-        velocity: Triple(
+        velocity: Vec3D(
             2.964_601_375_647_616e-3 * DAYS_PER_YEAR,
             2.378_471_739_594_809_5e-3 * DAYS_PER_YEAR,
             -2.965_895_685_402_375_6e-5 * DAYS_PER_YEAR,
@@ -144,12 +144,12 @@ pub const STARTING_STATE: [Body; BODIES_COUNT] = [
     },
     // Neptune
     Body {
-        position: Triple(
+        position: Vec3D(
             1.537_969_711_485_091_1e1,
             -2.591_931_460_998_796_4e1,
             1.792_587_729_503_711_8e-1,
         ),
-        velocity: Triple(
+        velocity: Vec3D(
             2.680_677_724_903_893_2e-3 * DAYS_PER_YEAR,
             1.628_241_700_382_423e-3 * DAYS_PER_YEAR,
             -9.515_922_545_197_159e-5 * DAYS_PER_YEAR,
@@ -160,7 +160,7 @@ pub const STARTING_STATE: [Body; BODIES_COUNT] = [
 
 /// Steps the simulation forward by one time-step.
 pub fn advance(bodies: &mut [Body; BODIES_COUNT], steps: usize) {
-    let mut d_positions: [Triple; INTERACTIONS] = Default::default();
+    let mut d_positions: [Vec3D; INTERACTIONS] = Default::default();
     let mut magnitudes = [0.; INTERACTIONS];
 
     for _ in 0 .. steps {
@@ -201,7 +201,7 @@ pub fn advance(bodies: &mut [Body; BODIES_COUNT], steps: usize) {
 /// Adjust the Sun's velocity to offset system momentum.
 pub fn offset_momentum(bodies: &mut [Body; BODIES_COUNT]) {
     let (sun, planets) = bodies.split_first_mut().unwrap();
-    sun.velocity = Triple(0., 0., 0.);
+    sun.velocity = Default::default();
     for planet in planets {
         sun.velocity -= &planet.velocity * (planet.mass / SOLAR_MASS);
     }
