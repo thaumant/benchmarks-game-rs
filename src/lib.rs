@@ -35,7 +35,7 @@ mod test {
 
             biffle::advance(&mut biffle_bodies);
             rehnberger_sim.advance(&mut rehnberger_bodies, 0.01);
-            thaumant::advance(&mut thaumant_bodies);
+            thaumant::advance(&mut thaumant_bodies, 1);
         }
     }
 }

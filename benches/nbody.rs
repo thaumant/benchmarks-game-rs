@@ -28,9 +28,7 @@ pub fn nbody_benchmark(c: &mut Criterion) {
         let mut thaumant2_bodies = thaumant::STARTING_STATE;
         thaumant::offset_momentum(&mut thaumant2_bodies);
         b.iter(|| {
-            for _ in 0..1000 {
-                thaumant::advance(&mut thaumant2_bodies);
-            }
+            thaumant::advance(&mut thaumant2_bodies, 1000);
         })
     });
 }

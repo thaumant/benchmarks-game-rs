@@ -149,40 +149,44 @@ pub const STARTING_STATE: [Body; BODIES_COUNT] = [
 ];
 
 /// Steps the simulation forward by one time-step.
-pub fn advance(bodies: &mut [Body; BODIES_COUNT]) {
-    let mut k = 0;
-
-    // Compute point-to-point vectors between each unique pair of bodies.
+pub fn advance(bodies: &mut [Body; BODIES_COUNT], steps: usize) {
+    let dt = 0.01;
     let mut d_positions = [Triple(0., 0., 0.); INTERACTIONS];
-    for (i, body1) in bodies.iter().enumerate() {
-        for body2 in &bodies[i + 1 ..] {
-            d_positions[k] = body1.position - body2.position;
-            k += 1;
+    let mut magnitudes  = [0.; INTERACTIONS];
+
+    for _ in 0 .. steps {
+        // Compute point-to-point vectors between each unique pair of bodies.
+        let mut k = 0;
+        for (i, body1) in bodies.iter().enumerate() {
+            for body2 in &bodies[i + 1 ..] {
+                d_positions[k] = body1.position - body2.position;
+                k += 1;
+            }
         }
-    }
-
-    // Compute the `1/d^3` magnitude between each pair of bodies.
-    let mut magnitudes = [0.; INTERACTIONS];
-    for (magnitude, d_position) in magnitudes.iter_mut().zip(d_positions.iter()) {
-        let d_magnitude = d_position.sum_squares();
-        *magnitude = 0.01 / (d_magnitude * d_magnitude.sqrt());
-    };
-
-    // Apply every other body's gravitation to each body's velocity.
-    k = 0;
-    for i in 0 .. BODIES_COUNT - 1 {
-        let (body1, rest) = bodies[i..].split_first_mut().unwrap();
-        for body2 in rest {
-            let magnitude   = magnitudes[k];
-            let d_position  = d_positions[k];
-            body1.velocity -= d_position * (body2.mass * magnitude);
-            body2.velocity += d_position * (body1.mass * magnitude);
-            k += 1;
+    
+        // Compute the `1/d^3` magnitude between each pair of bodies.
+        for (magnitude, d_position) in magnitudes.iter_mut().zip(d_positions.iter()) {
+            let d_magnitude = d_position.sum_squares();
+            *magnitude = dt / (d_magnitude * d_magnitude.sqrt());
+        };
+    
+        // Apply every other body's gravitation to each body's velocity.
+        let mut k = 0;
+        for i in 0 .. BODIES_COUNT - 1 {
+            let (body1, rest) = bodies[i..].split_first_mut().unwrap();
+            for body2 in rest {
+                let magnitude   = magnitudes[k];
+                let d_position  = d_positions[k];
+                body1.velocity -= d_position * (body2.mass * magnitude);
+                body2.velocity += d_position * (body1.mass * magnitude);
+                k += 1;
+            }
         }
-    }
-
-    for body in bodies {
-        body.position += body.velocity * 0.01;
+    
+        // Update positions
+        for body in bodies.iter_mut() {
+            body.position += body.velocity * dt;
+        }
     }
 }
 
