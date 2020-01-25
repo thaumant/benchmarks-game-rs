@@ -9,6 +9,11 @@ edition = "2018"
 [dev-dependencies]
 criterion = "0.3"
 
+[profile.release]
+lto = true
+opt-level = 3
+codegen-units = 1
+
 [[bench]]
 name = "nbody"
 harness = false
